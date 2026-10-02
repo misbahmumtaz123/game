@@ -73,58 +73,73 @@ class _GameScreenState extends State<GameScreen> {
               colors: mood.backgroundColors,
             ),
           ),
-          child: Stack(
-            children: [
-              // 1. Full-screen bubble arena — fills ENTIRE screen edge-to-edge,
-              //    including behind the status bar, so bubbles slide behind the header
-              const Positioned.fill(
-                child: BubbleField(),
-              ),
+          child: SafeArea(
+            bottom: false,
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    // 1. Top HUD / AppBar
+                    GameHeader(
+                      onQuit: () => _showQuitDialog(context, gameCtrl),
+                    ),
 
-              // 2. Floating borderless top HUD with its own SafeArea so the HUD
-              //    text respects device notch while BubbleField paints behind it
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: SafeArea(
-                  bottom: false,
-                  child: GameHeader(
-                    onQuit: () => _showQuitDialog(context, gameCtrl),
-                  ),
-                ),
-              ),
-
-              // 3. Flash feedback text (+10 / Target Escaped / NEW TARGET)
-              if (gameCtrl.flashFeedback.isNotEmpty)
-                IgnorePointer(
-                  child: Center(
-                    child: AnimatedScale(
-                      scale: 1.05,
-                      duration: const Duration(milliseconds: 150),
-                      child: Text(
-                        gameCtrl.flashFeedback,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: gameCtrl.flashFeedback.startsWith('-')
-                              ? Colors.redAccent
-                              : const Color(0xFFFFEB3B),
-                          fontSize: 44.0,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.0,
-                          shadows: const [
-                            Shadow(
-                              color: Colors.black87,
-                              blurRadius: 14,
-                              offset: Offset(0, 3),
-                            ),
+                    // 2. AppBar boundary line separating header from the game arena
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                      height: 1.5,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withAlpha(0),
+                            Colors.white.withAlpha(70),
+                            Colors.white.withAlpha(0),
                           ],
                         ),
                       ),
                     ),
-                  ),
+
+                    // 3. Play arena strictly below the AppBar line.
+                    // ClipRect prevents floating emojis from crossing or painting onto the AppBar.
+                    const Expanded(
+                      child: ClipRect(
+                        child: BubbleField(),
+                      ),
+                    ),
+                  ],
                 ),
-            ],
+
+                // 4. Flash feedback text (+10 / Target Escaped / NEW TARGET)
+                if (gameCtrl.flashFeedback.isNotEmpty)
+                  IgnorePointer(
+                    child: Center(
+                      child: AnimatedScale(
+                        scale: 1.05,
+                        duration: const Duration(milliseconds: 150),
+                        child: Text(
+                          gameCtrl.flashFeedback,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: gameCtrl.flashFeedback.startsWith('-')
+                                ? Colors.redAccent
+                                : const Color(0xFFFFEB3B),
+                            fontSize: 44.0,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                            shadows: const [
+                              Shadow(
+                                color: Colors.black87,
+                                blurRadius: 14,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

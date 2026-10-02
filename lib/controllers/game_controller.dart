@@ -42,6 +42,8 @@ class GameController extends ChangeNotifier {
   int _activeWhackIndex = -1;
   String _flashFeedback = '';
   double _elapsedTime = 0.0;
+  int _spawnAccumulatorMs = 0;
+  DateTime _lastTargetChangeTime = DateTime.now();
 
   late HappyRewardItem _currentReward;
 
@@ -77,6 +79,23 @@ class GameController extends ChangeNotifier {
   List<BubbleModel> get bubbles => List.unmodifiable(_bubbles);
   List<ParticleModel> get particles => List.unmodifiable(_particles);
 
+  /// Progressive speed calculation:
+  /// Starts slow at game start (0 score), and increases progressively
+  /// with every 5 points scored, accelerating smoothly as score grows.
+  double get currentSpeed {
+    final double baseSpeed = currentMood.speed * 0.40;
+    final int speedSteps = _score ~/ 5;
+    final double speed = baseSpeed + (speedSteps * 0.0014);
+    return speed.clamp(baseSpeed, 0.045);
+  }
+
+  /// Dynamic spawn interval in ms that shortens as score increases,
+  /// creating a gradual rush as player accumulates more points.
+  int get currentSpawnIntervalMs {
+    final int speedSteps = _score ~/ 5;
+    return (580 - (speedSteps * 20)).clamp(220, 580);
+  }
+
   /// Allows user to set custom target score to transform mood into happy
   void setTargetScore(int target) {
     if (target > 0) {
@@ -107,33 +126,42 @@ class GameController extends ChangeNotifier {
     _isGameOver = false;
     _isGoalReached = false;
     _timeRemaining = 60; // 1 minute duration
+    _lastTargetChangeTime = DateTime.now();
 
     _pickNewReward();
     _pickNextTargetEmoji();
     _resetTargetRotationTimer();
 
-    // Super fast spawn interval (220ms) for high-speed action
+    _spawnAccumulatorMs = 0;
     _spawnBubble();
-    _spawnTimer = Timer.periodic(
-      const Duration(milliseconds: 220),
-      (_) => _spawnBubble(),
-    );
 
-    // High frequency loop (30 FPS) for physics. Complete free movement without boundary lines.
+    // High frequency loop (30 FPS) for physics.
     _loopTimer = Timer.periodic(const Duration(milliseconds: 33), (_) {
       if (!_isPlaying) return;
       _elapsedTime += 0.033;
 
-      // Update positions freely
+      // Dynamic spawn pacing based on progressive score
+      _spawnAccumulatorMs += 33;
+      if (_spawnAccumulatorMs >= currentSpawnIntervalMs) {
+        _spawnAccumulatorMs = 0;
+        _spawnBubble();
+      }
+
+      // Update positions using progressive speed: starts slow, accelerates every 5 points
+      final speed = currentSpeed;
       for (final bubble in _bubbles) {
-        bubble.updatePosition(currentMood.speed);
+        bubble.updatePosition(speed);
       }
 
       // Detect escaped target bubbles BEFORE pruning them.
-      // Each target that floats past the top: -1 score, 1 HP damage.
-      final escaped = _bubbles
-          .where((b) => b.y < -0.3 && b.emoji == _currentTargetEmoji)
-          .length;
+      // 3-second grace period after target changes prevents unfair damage for balloons that were already near the top.
+      final bool inGracePeriod =
+          DateTime.now().difference(_lastTargetChangeTime).inMilliseconds < 3000;
+      final escaped = inGracePeriod
+          ? 0
+          : _bubbles
+              .where((b) => b.y < -0.10 && b.emoji == _currentTargetEmoji)
+              .length;
       if (escaped > 0) {
         _score = max(0, _score - escaped);
         for (int i = 0; i < escaped; i++) {
@@ -146,7 +174,7 @@ class GameController extends ChangeNotifier {
       }
 
       // Prune all off-screen bubbles (target and non-target alike)
-      _bubbles.removeWhere((b) => b.y < -0.3);
+      _bubbles.removeWhere((b) => b.y < -0.10);
 
       // Advance particles
       for (final particle in _particles) {
@@ -171,20 +199,26 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Spawns a floating bubble with a mix of target emojis and bad mood distractions
+  /// Spawns a floating bubble with guaranteed presence of the active target
   void _spawnBubble() {
     if (!_isPlaying) return;
 
-    final isTarget = _rnd.nextDouble() < 0.45;
+    final hasTargetOnScreen =
+        _bubbles.any((b) => b.emoji == _currentTargetEmoji);
     final String emoji;
-    if (isTarget) {
-      // High chance of being the current active target
-      emoji =
-          _rnd.nextDouble() < 0.65
-              ? _currentTargetEmoji
-              : _pickRandom(currentMood.targetEmojis);
+
+    // If there is currently no active target bubble on screen, guarantee spawning one
+    if (!hasTargetOnScreen) {
+      emoji = _currentTargetEmoji;
     } else {
-      emoji = _pickRandom(currentMood.distractionEmojis);
+      final isTarget = _rnd.nextDouble() < 0.55;
+      if (isTarget) {
+        emoji = _rnd.nextDouble() < 0.75
+            ? _currentTargetEmoji
+            : _pickRandom(currentMood.targetEmojis);
+      } else {
+        emoji = _pickRandom(currentMood.distractionEmojis);
+      }
     }
 
     final double baseX = 0.08 + _rnd.nextDouble() * 0.78;
@@ -353,6 +387,7 @@ class GameController extends ChangeNotifier {
     _currentTargetEmoji = _pickRandom(
       candidates.isNotEmpty ? candidates : currentMood.targetEmojis,
     );
+    _lastTargetChangeTime = DateTime.now();
     if (announced && _isPlaying) {
       _triggerFlash('NEW TARGET: $_currentTargetEmoji');
       HapticFeedback.selectionClick();
@@ -364,7 +399,7 @@ class GameController extends ChangeNotifier {
   void _resetTargetRotationTimer() {
     _targetRotationTimer?.cancel();
     _targetRotationTimer = Timer.periodic(
-      const Duration(milliseconds: 2500),
+      const Duration(seconds: 10),
       (_) {
         if (_isPlaying) {
           _pickNextTargetEmoji(announced: true);

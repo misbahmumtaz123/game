@@ -33,7 +33,7 @@ class BubbleField extends StatelessWidget {
             );
           },
           child: Stack(
-            clipBehavior: Clip.none,
+            clipBehavior: Clip.hardEdge,
             children: [
               // Floating bubbles moving completely freely across the screen
               for (final bubble in sortedBubbles)
