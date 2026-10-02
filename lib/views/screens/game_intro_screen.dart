@@ -293,8 +293,8 @@ class _GameIntroScreenState extends State<GameIntroScreen>
                           ScaleTransition(
                             scale: _detail3Anim,
                             child: _buildDetailRow(
-                              icon: Icons.bolt_rounded,
-                              label: '⚡ Hyper-Fast & Free-Floating (No Borders)',
+                              icon: Icons.speed_rounded,
+                              label: '🎈 Balanced Speed Scaling & Free Floating',
                               badgeColor: const Color(0xFFFFD54F),
                             ),
                           ),

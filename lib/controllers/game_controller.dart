@@ -79,21 +79,29 @@ class GameController extends ChangeNotifier {
   List<BubbleModel> get bubbles => List.unmodifiable(_bubbles);
   List<ParticleModel> get particles => List.unmodifiable(_particles);
 
-  /// Progressive speed calculation:
-  /// Starts slow at game start (0 score), and increases progressively
-  /// with every 5 points scored, accelerating smoothly as score grows.
+  /// Progressive speed calculation based on casual mobile game design standards:
+  /// - Starting speed provides a comfortable ~5.0 - 5.5s screen transit time.
+  /// - At 5-10 points (early game), the speed increase is subtle and gentle (+1% to +4%),
+  ///   ensuring the player never feels overwhelmed early on.
+  /// - As score climbs towards 350-500 points, it follows a smooth sub-linear power curve
+  ///   accelerating up to a peak ~3.0s transit time for an exciting, reactable challenge.
   double get currentSpeed {
-    final double baseSpeed = currentMood.speed * 0.40;
-    final int speedSteps = _score ~/ 5;
-    final double speed = baseSpeed + (speedSteps * 0.0014);
-    return speed.clamp(baseSpeed, 0.045);
+    // Base speed provides a relaxed ~5.2s transit across the screen
+    final double baseSpeed = currentMood.speed * 0.27;
+    // Sublinear power progression over 400 points
+    final double progress = (_score / 400.0).clamp(0.0, 1.0);
+    final double curve = pow(progress, 0.85).toDouble();
+    // Max speed at endgame is 1.75x baseSpeed (approx 3.0s transit time)
+    return baseSpeed * (1.0 + 0.75 * curve);
   }
 
-  /// Dynamic spawn interval in ms that shortens as score increases,
-  /// creating a gradual rush as player accumulates more points.
+  /// Dynamic spawn interval in ms that shortens as score increases.
+  /// Starts at an unhurried 1100ms and scales gradually to 650ms at peak score,
+  /// keeping the arena readable and fair without balloon clutter.
   int get currentSpawnIntervalMs {
-    final int speedSteps = _score ~/ 5;
-    return (580 - (speedSteps * 20)).clamp(220, 580);
+    final double progress = (_score / 400.0).clamp(0.0, 1.0);
+    final double curve = pow(progress, 0.85).toDouble();
+    return (1100 - (curve * 450)).round().clamp(650, 1100);
   }
 
   /// Allows user to set custom target score to transform mood into happy
@@ -147,16 +155,16 @@ class GameController extends ChangeNotifier {
         _spawnBubble();
       }
 
-      // Update positions using progressive speed: starts slow, accelerates every 5 points
+      // Update positions using progressive speed curve: gentle float, smooth acceleration
       final speed = currentSpeed;
       for (final bubble in _bubbles) {
         bubble.updatePosition(speed);
       }
 
       // Detect escaped target bubbles BEFORE pruning them.
-      // 3-second grace period after target changes prevents unfair damage for balloons that were already near the top.
+      // 3.5-second grace period after target changes prevents unfair damage for balloons that were already near the top.
       final bool inGracePeriod =
-          DateTime.now().difference(_lastTargetChangeTime).inMilliseconds < 3000;
+          DateTime.now().difference(_lastTargetChangeTime).inMilliseconds < 3500;
       final escaped = inGracePeriod
           ? 0
           : _bubbles

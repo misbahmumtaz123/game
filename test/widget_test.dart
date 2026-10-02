@@ -11,7 +11,7 @@ void main() {
     expect(find.text('Start Game'), findsOneWidget);
   });
 
-  test('GameController speed increases progressively every 5 points', () {
+  test('GameController speed increases progressively and smoothly without harsh jumps', () {
     final controller = GameController();
     controller.startGame();
 
@@ -19,7 +19,6 @@ void main() {
     final initialSpawn = controller.currentSpawnIntervalMs;
 
     // Simulate hitting target bubbles to score points
-    // When score is 0: initial slow speed
     expect(controller.score, 0);
 
     // Hit a target (+10 points)
@@ -31,11 +30,16 @@ void main() {
       800,
     );
 
-    // If score increased to >= 5 or >= 10, speed must increase
-    if (controller.score >= 5) {
-      expect(controller.currentSpeed, greaterThan(initialSpeed));
-      expect(controller.currentSpawnIntervalMs, lessThanOrEqualTo(initialSpawn));
-    }
+    // Score is now 10
+    expect(controller.score, 10);
+    // At early score (10 points), speed increase should be subtle (< 5%), not frantic
+    final speedAt10 = controller.currentSpeed;
+    expect(speedAt10, greaterThan(initialSpeed));
+    expect(speedAt10 / initialSpeed, lessThan(1.06)); // Less than 6% increase at 10 points!
+
+    // Verify spawn pacing is comfortable
+    expect(controller.currentSpawnIntervalMs, lessThanOrEqualTo(initialSpawn));
+    expect(controller.currentSpawnIntervalMs, greaterThanOrEqualTo(1000));
 
     controller.stopGame();
   });
