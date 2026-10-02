@@ -19,8 +19,8 @@ class GameController extends ChangeNotifier {
   int get currentMoodIndex => _currentMoodIndex;
   MoodModel get currentMood => MoodModel.badMoodPresets[_currentMoodIndex];
 
-  // User-defined Target Score to achieve Happy Mood
-  int _targetScore = 500;
+  // User-defined Target Score to achieve Happy Mood (150 pts = 15 target hits in 1 minute)
+  int _targetScore = 150;
   int get targetScore => _targetScore;
 
   // Game state
@@ -39,6 +39,7 @@ class GameController extends ChangeNotifier {
 
   // Active game variables
   String _currentTargetEmoji = '☀️';
+  int _currentTargetHits = 0;
   int _activeWhackIndex = -1;
   String _flashFeedback = '';
   double _elapsedTime = 0.0;
@@ -88,8 +89,8 @@ class GameController extends ChangeNotifier {
   double get currentSpeed {
     // Base speed provides a relaxed ~5.2s transit across the screen
     final double baseSpeed = currentMood.speed * 0.27;
-    // Sublinear power progression over 400 points
-    final double progress = (_score / 400.0).clamp(0.0, 1.0);
+    // Sublinear power progression smoothly scaled over the target score
+    final double progress = (_score / _targetScore).clamp(0.0, 1.0);
     final double curve = pow(progress, 0.85).toDouble();
     // Max speed at endgame is 1.75x baseSpeed (approx 3.0s transit time)
     return baseSpeed * (1.0 + 0.75 * curve);
@@ -99,7 +100,7 @@ class GameController extends ChangeNotifier {
   /// Starts at an unhurried 1100ms and scales gradually to 650ms at peak score,
   /// keeping the arena readable and fair without balloon clutter.
   int get currentSpawnIntervalMs {
-    final double progress = (_score / 400.0).clamp(0.0, 1.0);
+    final double progress = (_score / _targetScore).clamp(0.0, 1.0);
     final double curve = pow(progress, 0.85).toDouble();
     return (1100 - (curve * 450)).round().clamp(650, 1100);
   }
@@ -124,6 +125,7 @@ class GameController extends ChangeNotifier {
   void startGame() {
     _stopTimers();
     _score = 0;
+    _currentTargetHits = 0;
     _lives = maxLives;
     _currentLifeHp = hpPerLife;
     _bubbles.clear();
@@ -142,6 +144,18 @@ class GameController extends ChangeNotifier {
 
     _spawnAccumulatorMs = 0;
     _spawnBubble();
+    // Pre-populate an initial target bubble so the arena is interactive immediately
+    _bubbles.add(
+      BubbleModel(
+        id: ++_bubbleIdCounter,
+        emoji: _currentTargetEmoji,
+        baseX: 0.30 + _rnd.nextDouble() * 0.40,
+        y: 0.60,
+        z: 1.0,
+        phase: _rnd.nextDouble() * 6.28,
+        swayAmplitude: 0.04,
+      ),
+    );
 
     // High frequency loop (30 FPS) for physics.
     _loopTimer = Timer.periodic(const Duration(milliseconds: 33), (_) {
@@ -211,17 +225,22 @@ class GameController extends ChangeNotifier {
   void _spawnBubble() {
     if (!_isPlaying) return;
 
-    final hasTargetOnScreen =
-        _bubbles.any((b) => b.emoji == _currentTargetEmoji);
+    final int targetCount =
+        _bubbles.where((b) => b.emoji == _currentTargetEmoji).length;
     final String emoji;
 
-    // If there is currently no active target bubble on screen, guarantee spawning one
-    if (!hasTargetOnScreen) {
+    // Guarantee 1 to 2 active target bubbles in the arena at all times
+    if (targetCount == 0) {
       emoji = _currentTargetEmoji;
+    } else if (targetCount == 1) {
+      // 70% chance of spawning another target for fluid, engaging gameplay
+      emoji = _rnd.nextDouble() < 0.70
+          ? _currentTargetEmoji
+          : _pickRandom(currentMood.distractionEmojis);
     } else {
-      final isTarget = _rnd.nextDouble() < 0.55;
+      final isTarget = _rnd.nextDouble() < 0.50;
       if (isTarget) {
-        emoji = _rnd.nextDouble() < 0.75
+        emoji = _rnd.nextDouble() < 0.60
             ? _currentTargetEmoji
             : _pickRandom(currentMood.targetEmojis);
       } else {
@@ -293,7 +312,7 @@ class GameController extends ChangeNotifier {
       if (isTargetHit) {
         // TARGET HIT: +10 Points!
         _score += 10;
-        _triggerFlash('+10');
+        _currentTargetHits++;
         HapticFeedback.lightImpact();
 
         if (_score >= _targetScore) {
@@ -302,8 +321,14 @@ class GameController extends ChangeNotifier {
           return;
         }
 
-        // Dynamically cycle target emoji
-        _pickNextTargetEmoji(announced: true);
+        // 3-hit combo on the active target triggers a combo fanfare and rotates target
+        if (_currentTargetHits >= 3) {
+          _currentTargetHits = 0;
+          _triggerFlash('+10 COMBO! 🔥');
+          _pickNextTargetEmoji(announced: true);
+        } else {
+          _triggerFlash('+10');
+        }
       } else {
         // Non-target bubble hit: "Firing at other non-target emojis should not decrease the score."
         _triggerFlash('Safe Pop');
@@ -390,6 +415,7 @@ class GameController extends ChangeNotifier {
   }
 
   void _pickNextTargetEmoji({bool announced = false}) {
+    _currentTargetHits = 0;
     final candidates =
         currentMood.targetEmojis.where((e) => e != _currentTargetEmoji).toList();
     _currentTargetEmoji = _pickRandom(
@@ -407,7 +433,7 @@ class GameController extends ChangeNotifier {
   void _resetTargetRotationTimer() {
     _targetRotationTimer?.cancel();
     _targetRotationTimer = Timer.periodic(
-      const Duration(seconds: 10),
+      const Duration(seconds: 8),
       (_) {
         if (_isPlaying) {
           _pickNextTargetEmoji(announced: true);

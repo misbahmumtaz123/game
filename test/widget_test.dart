@@ -32,14 +32,49 @@ void main() {
 
     // Score is now 10
     expect(controller.score, 10);
-    // At early score (10 points), speed increase should be subtle (< 5%), not frantic
+    // At early score (10 points), speed increase should be gentle (< 10%), adhering to the 10% game design rule
     final speedAt10 = controller.currentSpeed;
     expect(speedAt10, greaterThan(initialSpeed));
-    expect(speedAt10 / initialSpeed, lessThan(1.06)); // Less than 6% increase at 10 points!
+    expect(speedAt10 / initialSpeed, lessThan(1.10));
 
     // Verify spawn pacing is comfortable
     expect(controller.currentSpawnIntervalMs, lessThanOrEqualTo(initialSpawn));
     expect(controller.currentSpawnIntervalMs, greaterThanOrEqualTo(1000));
+
+    controller.stopGame();
+  });
+
+  testWidgets('Reaching 150 target score wins the game immediately with goal achieved', (WidgetTester tester) async {
+    final controller = GameController();
+    controller.startGame();
+
+    expect(controller.targetScore, 150);
+    expect(controller.isGoalReached, isFalse);
+
+    // Hit targets until reaching 150
+    while (controller.score < 150 && controller.isPlaying) {
+      if (controller.bubbles.isEmpty) {
+        await tester.pump(const Duration(milliseconds: 1100));
+      }
+      if (controller.bubbles.isEmpty) break;
+
+      final target = controller.bubbles.firstWhere(
+        (b) => b.emoji == controller.currentTargetEmoji,
+        orElse: () => controller.bubbles.first,
+      );
+      controller.handleShot(
+        target.currentX * 400 + 10,
+        target.y * 800 + 10,
+        400,
+        800,
+      );
+      await tester.pump(const Duration(milliseconds: 600));
+    }
+
+    expect(controller.score, greaterThanOrEqualTo(150));
+    expect(controller.isGoalReached, isTrue);
+    expect(controller.isGameOver, isTrue);
+    expect(controller.isPlaying, isFalse);
 
     controller.stopGame();
   });
