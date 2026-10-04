@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
@@ -41,7 +42,7 @@ class TutorialService {
         identify: "target_banner_focus",
         keyTarget: targetKey,
         shape: ShapeLightFocus.RRect,
-        radius: 20,
+        radius: 22,
         enableOverlayTab: true,
         contents: [
           TargetContent(
@@ -50,7 +51,7 @@ class TutorialService {
               return Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A).withAlpha(240),
+                  color: const Color(0xFF0F172A).withAlpha(245),
                   borderRadius: BorderRadius.circular(18.0),
                   border: Border.all(
                     color: const Color(0xFFFFD54F).withAlpha(160),
@@ -58,7 +59,7 @@ class TutorialService {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFFD54F).withAlpha(50),
+                      color: const Color(0xFFFFD54F).withAlpha(60),
                       blurRadius: 16.0,
                       spreadRadius: 2.0,
                     ),
@@ -94,7 +95,7 @@ class TutorialService {
                     ),
                     const SizedBox(height: 10.0),
                     const Text(
-                      'Hit the floating bubble with this emoji to score +10 Points! The target changes periodically, so keep your eyes on it.',
+                      'Hit the floating bubble matching this emoji to score +10 Points! The target changes periodically, so keep your eyes on it.',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 13.5,
@@ -102,23 +103,39 @@ class TutorialService {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 12.0),
+                    const SizedBox(height: 14.0),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          controller.next();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
                           ),
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: const Text(
-                          'Next ➜',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13.0,
-                            fontWeight: FontWeight.bold,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                            ),
+                            borderRadius: BorderRadius.circular(12.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFF59E0B).withAlpha(100),
+                                blurRadius: 8.0,
+                              ),
+                            ],
+                          ),
+                          child: const Text(
+                            'Next ➜',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -145,7 +162,7 @@ class TutorialService {
               return Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A).withAlpha(240),
+                  color: const Color(0xFF0F172A).withAlpha(245),
                   borderRadius: BorderRadius.circular(18.0),
                   border: Border.all(
                     color: const Color(0xFFF43F5E).withAlpha(160),
@@ -153,7 +170,7 @@ class TutorialService {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFF43F5E).withAlpha(50),
+                      color: const Color(0xFFF43F5E).withAlpha(60),
                       blurRadius: 16.0,
                     ),
                   ],
@@ -188,7 +205,7 @@ class TutorialService {
                     ),
                     const SizedBox(height: 10.0),
                     const Text(
-                      'You start with 3 lives. Hitting wrong distraction emojis damages you. Avoid wrong hits to protect your lives!',
+                      'You start with 3 lives. Hitting wrong distraction emojis damages you (-1 life). Avoid wrong hits to protect your lives!',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 13.5,
@@ -196,23 +213,39 @@ class TutorialService {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 12.0),
+                    const SizedBox(height: 14.0),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFF43F5E), Color(0xFFE11D48)],
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          controller.next();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
                           ),
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: const Text(
-                          'Next ➜',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13.0,
-                            fontWeight: FontWeight.bold,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFF43F5E), Color(0xFFE11D48)],
+                            ),
+                            borderRadius: BorderRadius.circular(12.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFF43F5E).withAlpha(100),
+                                blurRadius: 8.0,
+                              ),
+                            ],
+                          ),
+                          child: const Text(
+                            'Next ➜',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -239,7 +272,7 @@ class TutorialService {
               return Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A).withAlpha(240),
+                  color: const Color(0xFF0F172A).withAlpha(245),
                   borderRadius: BorderRadius.circular(18.0),
                   border: Border.all(
                     color: const Color(0xFF38BDF8).withAlpha(160),
@@ -247,7 +280,7 @@ class TutorialService {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF38BDF8).withAlpha(50),
+                      color: const Color(0xFF38BDF8).withAlpha(60),
                       blurRadius: 16.0,
                     ),
                   ],
@@ -282,7 +315,7 @@ class TutorialService {
                     ),
                     const SizedBox(height: 10.0),
                     const Text(
-                      'Reach the 150 points goal before the 1-minute countdown runs out to transform your mood to Happy! Missing targets will deduct 3 points.',
+                      'Reach 150 points before the 1-minute countdown runs out to transform your mood to Happy! Missing targets deducts 3 points.',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 13.5,
@@ -290,23 +323,39 @@ class TutorialService {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 12.0),
+                    const SizedBox(height: 14.0),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF0284C7), Color(0xFF0369A1)],
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          controller.next();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
                           ),
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        child: const Text(
-                          'Next ➜',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13.0,
-                            fontWeight: FontWeight.bold,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF0284C7), Color(0xFF0369A1)],
+                            ),
+                            borderRadius: BorderRadius.circular(12.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF0284C7).withAlpha(100),
+                                blurRadius: 8.0,
+                              ),
+                            ],
+                          ),
+                          child: const Text(
+                            'Next ➜',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -333,7 +382,7 @@ class TutorialService {
               return Container(
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A).withAlpha(240),
+                  color: const Color(0xFF0F172A).withAlpha(245),
                   borderRadius: BorderRadius.circular(18.0),
                   border: Border.all(
                     color: const Color(0xFF10B981).withAlpha(160),
@@ -341,7 +390,7 @@ class TutorialService {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF10B981).withAlpha(50),
+                      color: const Color(0xFF10B981).withAlpha(60),
                       blurRadius: 16.0,
                     ),
                   ],
@@ -384,29 +433,39 @@ class TutorialService {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 12.0),
+                    const SizedBox(height: 14.0),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF10B981), Color(0xFF059669)],
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          HapticFeedback.mediumImpact();
+                          controller.next();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18.0,
+                            vertical: 9.0,
                           ),
-                          borderRadius: BorderRadius.circular(14.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF10B981).withAlpha(100),
-                              blurRadius: 10.0,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF10B981), Color(0xFF059669)],
                             ),
-                          ],
-                        ),
-                        child: const Text(
-                          'Let\'s Play! 🚀',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14.0,
-                            fontWeight: FontWeight.w900,
+                            borderRadius: BorderRadius.circular(14.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF10B981).withAlpha(120),
+                                blurRadius: 10.0,
+                              ),
+                            ],
+                          ),
+                          child: const Text(
+                            'Let\'s Play! 🚀',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                         ),
                       ),
