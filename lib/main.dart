@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'controllers/game_controller.dart';
-import 'views/screens/welcome_screen.dart';
+import 'views/screens/splash_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,14 +24,14 @@ class EmojiBubbleApp extends StatelessWidget {
     return ChangeNotifierProvider<GameController>(
       create: (_) => GameController(),
       child: MaterialApp(
-        title: 'Emoji Pop 4D',
+        title: 'Mood Switcher',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.dark,
           fontFamily: 'Roboto',
         ),
-        home: const WelcomeScreen(),
+        home: const SplashScreen(),
       ),
     );
   }

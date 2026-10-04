@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 /// "4D" Glossy Bubble Orb with dynamic depth, specular shine, and real-time 3D wobble.
 class BubbleOrb extends StatelessWidget {
   final String emoji;
+  final String? imageAsset;
   final double size;
   final Color tintColor;
   final double time;
@@ -12,7 +13,8 @@ class BubbleOrb extends StatelessWidget {
 
   const BubbleOrb({
     super.key,
-    required this.emoji,
+    this.emoji = '',
+    this.imageAsset,
     required this.size,
     required this.tintColor,
     this.time = 0.0,
@@ -61,8 +63,18 @@ class BubbleOrb extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Center emoji
-            if (emoji.isNotEmpty)
+            // Center content: High Quality Image Asset or Emoji
+            if (imageAsset != null && imageAsset!.isNotEmpty)
+              ClipOval(
+                child: Image.asset(
+                  imageAsset!,
+                  width: size * 0.82,
+                  height: size * 0.82,
+                  fit: BoxFit.cover,
+                  filterQuality: FilterQuality.high,
+                ),
+              )
+            else if (emoji.isNotEmpty)
               Text(
                 emoji,
                 style: TextStyle(

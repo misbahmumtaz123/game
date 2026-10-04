@@ -28,6 +28,7 @@ class GameController extends ChangeNotifier {
   int _bestScore = 0;
   int _timeRemaining = 60; // 1 minute
   bool _isPlaying = false;
+  bool _isPaused = false;
   bool _isGameOver = false;
   bool _isGoalReached = false;
 
@@ -69,6 +70,7 @@ class GameController extends ChangeNotifier {
   int get lives => _lives;
   int get currentLifeHp => _currentLifeHp;
   bool get isPlaying => _isPlaying;
+  bool get isPaused => _isPaused;
   bool get isGameOver => _isGameOver;
   bool get isGoalReached => _isGoalReached;
   String get currentTargetEmoji => _currentTargetEmoji;
@@ -157,9 +159,32 @@ class GameController extends ChangeNotifier {
       ),
     );
 
+    _isPaused = false;
+    _startTimers();
+    notifyListeners();
+  }
+
+  /// Pause active timers (e.g. while tutorial coach mark is displayed)
+  void pauseGame() {
+    if (!_isPlaying || _isPaused) return;
+    _isPaused = true;
+    _stopTimers();
+    notifyListeners();
+  }
+
+  /// Resume game loops after tutorial completion
+  void resumeGame() {
+    if (!_isPlaying || !_isPaused) return;
+    _isPaused = false;
+    _resetTargetRotationTimer();
+    _startTimers();
+    notifyListeners();
+  }
+
+  void _startTimers() {
     // High frequency loop (30 FPS) for physics.
     _loopTimer = Timer.periodic(const Duration(milliseconds: 33), (_) {
-      if (!_isPlaying) return;
+      if (!_isPlaying || _isPaused) return;
       _elapsedTime += 0.033;
 
       // Dynamic spawn pacing based on progressive score
@@ -185,13 +210,9 @@ class GameController extends ChangeNotifier {
               .where((b) => b.y < -0.10 && b.emoji == _currentTargetEmoji)
               .length;
       if (escaped > 0) {
-        _score = max(0, _score - escaped);
-        for (int i = 0; i < escaped; i++) {
-          _takeDamage(1);
-          if (!_isPlaying) break; // game ended mid-loop
-        }
+        _score = max(0, _score - (escaped * 3));
         if (_isPlaying) {
-          _triggerFlash('-$escaped Target Escaped! 💨');
+          _triggerFlash('-${escaped * 3} Target Missed! 💨');
         }
       }
 
@@ -209,6 +230,7 @@ class GameController extends ChangeNotifier {
 
     // 1-minute countdown clock
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (_isPaused) return;
       if (_timeRemaining > 1) {
         _timeRemaining--;
         notifyListeners();
@@ -217,8 +239,6 @@ class GameController extends ChangeNotifier {
         _endGame(goalAchieved: _score >= _targetScore);
       }
     });
-
-    notifyListeners();
   }
 
   /// Spawns a floating bubble with guaranteed presence of the active target
@@ -330,9 +350,10 @@ class GameController extends ChangeNotifier {
           _triggerFlash('+10');
         }
       } else {
-        // Non-target bubble hit: "Firing at other non-target emojis should not decrease the score."
-        _triggerFlash('Safe Pop');
-        HapticFeedback.selectionClick();
+        // Wrong hit: -1 life
+        _takeDamage(hpPerLife);
+        _triggerFlash('Wrong Hit! -1 ❤️');
+        HapticFeedback.heavyImpact();
       }
 
       notifyListeners();

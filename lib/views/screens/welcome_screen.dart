@@ -7,7 +7,7 @@ import '../widgets/glass_card.dart';
 import '../widgets/mood_scaffold.dart';
 import 'mood_selection_screen.dart';
 
-/// Welcome / Splash Screen introducing Emoji Pop 4D.
+/// Welcome / Splash Screen introducing Mood Switcher.
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
@@ -44,14 +44,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Hero 4D Bubble Orb
+            // Hero 4D Bubble Orb with App Logo
             AnimatedBuilder(
               animation: _wobbleController,
               builder: (context, _) {
                 return BubbleOrb(
-                  emoji: '🎈',
-                  size: 135.0,
-                  tintColor: gameCtrl.currentMood.tintColor,
+                  imageAsset: 'assets/icon/app_icon_1024.png',
+                  size: 165.0,
+                  tintColor: const Color(0xFFFFD54F),
                   time: _wobbleController.value * 10.0,
                 );
               },
@@ -61,7 +61,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
             // Game Title
             const Text(
-              'Emoji Pop 4D',
+              'Mood Switcher',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
@@ -80,9 +80,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
             const SizedBox(height: 10.0),
 
-            // Subtitle
+            // Subtitle / Description
             const Text(
-              'A unique 4D bubble game for every mood',
+              'Switch your mood from gloom to joy by popping emoji bubbles!',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,

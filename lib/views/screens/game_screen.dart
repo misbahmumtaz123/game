@@ -1,11 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import '../../controllers/game_controller.dart';
+import '../../services/tutorial_service.dart';
 import '../widgets/bubble_field.dart';
 import '../widgets/game_header.dart';
 import 'reward_screen.dart';
 
-/// Active gameplay screen coordinating mini-games and game loops.
+/// Active gameplay screen coordinating mini-games, game loops, target displays,
+/// and the first-use How-to-Play tutorial coach mark.
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
 
@@ -15,25 +19,96 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   bool _navigatedToReward = false;
+  GameController? _gameCtrl;
+
+  Timer? _tutorialTimer;
+
+  // GlobalKeys for TutorialCoachMark target highlights
+  final GlobalKey _targetKey = GlobalKey();
+  final GlobalKey _livesKey = GlobalKey();
+  final GlobalKey _scoreTimerKey = GlobalKey();
+  final GlobalKey _arenaKey = GlobalKey();
+  TutorialCoachMark? _tutorialCoachMark;
 
   @override
   void initState() {
     super.initState();
-    // Launch game when view is mounted
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<GameController>().startGame();
-      }
+      if (!mounted) return;
+      final ctrl = context.read<GameController>();
+      _gameCtrl = ctrl;
+      ctrl.startGame();
+      ctrl.addListener(_onGameChanged);
+
+      _checkAndShowTutorial(ctrl);
     });
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final gameCtrl = context.watch<GameController>();
+  /// Automatically shows the "How to Play" tutorial on 1st use only
+  Future<void> _checkAndShowTutorial(GameController ctrl) async {
+    final bool hasSeen = await TutorialService.hasSeenTutorial();
+    if (!hasSeen && mounted) {
+      ctrl.pauseGame();
 
-    // Detect game over and transition to reward screen
-    if (gameCtrl.isGameOver && !_navigatedToReward) {
+      // Short delay ensuring all widgets and GlobalKeys are completely laid out
+      _tutorialTimer?.cancel();
+      _tutorialTimer = Timer(const Duration(milliseconds: 300), () {
+        if (!mounted) return;
+        _tutorialCoachMark = TutorialService.createGameTutorial(
+          context: context,
+          targetKey: _targetKey,
+          livesKey: _livesKey,
+          scoreTimerKey: _scoreTimerKey,
+          arenaKey: _arenaKey,
+          onFinish: () {
+            if (mounted) {
+              ctrl.resumeGame();
+            }
+          },
+          onSkip: () {
+            if (mounted) {
+              ctrl.resumeGame();
+            }
+          },
+        );
+        _tutorialCoachMark?.show(context: context);
+      });
+    }
+  }
+
+  /// Allows re-running the how to play tutorial explicitly anytime
+  void _showTutorialExplicitly() {
+    final ctrl = _gameCtrl;
+    if (ctrl == null || !mounted) return;
+    ctrl.pauseGame();
+    _tutorialCoachMark = TutorialService.createGameTutorial(
+      context: context,
+      targetKey: _targetKey,
+      livesKey: _livesKey,
+      scoreTimerKey: _scoreTimerKey,
+      arenaKey: _arenaKey,
+      onFinish: () {
+        if (mounted) ctrl.resumeGame();
+      },
+      onSkip: () {
+        if (mounted) ctrl.resumeGame();
+      },
+    );
+    _tutorialCoachMark?.show(context: context);
+  }
+
+  @override
+  void dispose() {
+    _tutorialTimer?.cancel();
+    _gameCtrl?.removeListener(_onGameChanged);
+    super.dispose();
+  }
+
+  void _onGameChanged() {
+    if (!mounted || _navigatedToReward) return;
+
+    final ctrl = _gameCtrl;
+    if (ctrl != null && ctrl.isGameOver) {
       _navigatedToReward = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -79,12 +154,16 @@ class _GameScreenState extends State<GameScreen> {
               children: [
                 Column(
                   children: [
-                    // 1. Top HUD / AppBar
+                    // 1. Top HUD Bar with Large Prominent Target, Lives, Score, Timer
                     GameHeader(
                       onQuit: () => _showQuitDialog(context, gameCtrl),
+                      livesKey: _livesKey,
+                      targetKey: _targetKey,
+                      scoreTimerKey: _scoreTimerKey,
+                      onHelpTap: _showTutorialExplicitly,
                     ),
 
-                    // 2. AppBar boundary line separating header from the game arena
+                    // 3. AppBar boundary line separating header from the game arena
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 16.0),
                       height: 1.5,
@@ -99,17 +178,19 @@ class _GameScreenState extends State<GameScreen> {
                       ),
                     ),
 
-                    // 3. Play arena strictly below the AppBar line.
-                    // ClipRect prevents floating emojis from crossing or painting onto the AppBar.
-                    const Expanded(
-                      child: ClipRect(
-                        child: BubbleField(),
+                    // 4. Play arena strictly below the boundary line
+                    Expanded(
+                      child: Container(
+                        key: _arenaKey,
+                        child: const ClipRect(
+                          child: BubbleField(),
+                        ),
                       ),
                     ),
                   ],
                 ),
 
-                // 4. Flash feedback text (+10 / Target Escaped / NEW TARGET)
+                // 5. Flash feedback text (+10 / Target Escaped / NEW TARGET)
                 if (gameCtrl.flashFeedback.isNotEmpty)
                   IgnorePointer(
                     child: Center(

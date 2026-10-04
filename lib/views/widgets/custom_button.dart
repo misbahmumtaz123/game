@@ -59,25 +59,28 @@ class _CustomButtonState extends State<CustomButton> {
               ),
             ],
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (widget.icon != null) ...[
-                Icon(widget.icon, color: widget.textColor, size: 22.0),
-                const SizedBox(width: 8.0),
-              ],
-              Text(
-                widget.label,
-                style: TextStyle(
-                  color: widget.textColor ?? const Color(0xFF1E293B),
-                  fontSize: widget.fontSize,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                  decoration: TextDecoration.none,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (widget.icon != null) ...[
+                  Icon(widget.icon, color: widget.textColor, size: 22.0),
+                  const SizedBox(width: 8.0),
+                ],
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    color: widget.textColor ?? const Color(0xFF1E293B),
+                    fontSize: widget.fontSize,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                    decoration: TextDecoration.none,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

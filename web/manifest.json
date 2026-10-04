@@ -1,11 +1,11 @@
 {
-    "name": "Emojis Bubble Game",
-    "short_name": "Emojis Bubble Game",
+    "name": "Mood Switcher",
+    "short_name": "Mood Switcher",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#090526",
+    "theme_color": "#090526",
+    "description": "Mood Switcher - Switch your mood from gloom to joy by popping emoji bubbles!",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

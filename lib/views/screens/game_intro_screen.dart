@@ -31,6 +31,7 @@ class _GameIntroScreenState extends State<GameIntroScreen>
   late final Animation<double> _detail1Anim;
   late final Animation<double> _detail2Anim;
   late final Animation<double> _detail3Anim;
+  late final Animation<double> _detail4Anim;
   late final Animation<double> _btnScaleAnim;
 
   @override
@@ -74,15 +75,13 @@ class _GameIntroScreenState extends State<GameIntroScreen>
       curve: const Interval(0.35, 0.75, curve: Curves.elasticOut),
     );
 
-    _cardSlideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.4),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _entranceController,
-        curve: const Interval(0.35, 0.72, curve: Curves.easeOutBack),
-      ),
-    );
+    _cardSlideAnim =
+        Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _entranceController,
+            curve: const Interval(0.35, 0.72, curve: Curves.easeOutBack),
+          ),
+        );
 
     _ruleScaleAnim = CurvedAnimation(
       parent: _entranceController,
@@ -91,22 +90,27 @@ class _GameIntroScreenState extends State<GameIntroScreen>
 
     _detail1Anim = CurvedAnimation(
       parent: _entranceController,
-      curve: const Interval(0.58, 0.88, curve: Curves.elasticOut),
+      curve: const Interval(0.54, 0.84, curve: Curves.elasticOut),
     );
 
     _detail2Anim = CurvedAnimation(
       parent: _entranceController,
-      curve: const Interval(0.66, 0.94, curve: Curves.elasticOut),
+      curve: const Interval(0.60, 0.88, curve: Curves.elasticOut),
     );
 
     _detail3Anim = CurvedAnimation(
       parent: _entranceController,
-      curve: const Interval(0.74, 1.0, curve: Curves.elasticOut),
+      curve: const Interval(0.66, 0.92, curve: Curves.elasticOut),
+    );
+
+    _detail4Anim = CurvedAnimation(
+      parent: _entranceController,
+      curve: const Interval(0.72, 0.96, curve: Curves.elasticOut),
     );
 
     _btnScaleAnim = CurvedAnimation(
       parent: _entranceController,
-      curve: const Interval(0.80, 1.0, curve: Curves.elasticOut),
+      curve: const Interval(0.78, 1.0, curve: Curves.elasticOut),
     );
 
     _entranceController.forward();
@@ -125,6 +129,7 @@ class _GameIntroScreenState extends State<GameIntroScreen>
     final mood = gameCtrl.currentMood;
 
     return MoodScaffold(
+      scrollable: false,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -136,240 +141,362 @@ class _GameIntroScreenState extends State<GameIntroScreen>
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 8.0),
-        child: AnimatedBuilder(
-          animation: Listenable.merge([
-            _entranceController,
-            _idleWiggleController,
-          ]),
-          builder: (context, _) {
-            final idleWiggle =
-                sin(_idleWiggleController.value * 2.0 * pi) * 0.035;
-            final idleBob = sin(_idleWiggleController.value * pi) * 4.0;
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final h = constraints.maxHeight;
+          final isCompact = h < 720;
+          final isVeryCompact = h < 620;
 
-            return Column(
-              children: [
-                // Hero Mood Orb
-                Transform.translate(
-                  offset: Offset(0, idleBob * 0.6),
-                  child: ScaleTransition(
-                    scale: _orbAnim,
-                    child: BubbleOrb(
-                      emoji: mood.emoji,
-                      size: 110.0,
-                      tintColor: mood.tintColor,
-                    ),
-                  ),
-                ),
+          final orbSize = (h * 0.115).clamp(46.0, 92.0);
+          final titleFontSize = (h * 0.038).clamp(20.0, 32.0);
+          final bannerFontSize = (h * 0.017).clamp(11.5, 14.5);
+          final itemVerticalPadding =
+              isVeryCompact ? 3.5 : (isCompact ? 5.0 : 8.0);
+          final itemHorizontalPadding = isCompact ? 10.0 : 14.0;
+          final iconBoxSize = isVeryCompact ? 26.0 : (isCompact ? 30.0 : 34.0);
+          final iconSize = isVeryCompact ? 15.0 : (isCompact ? 17.0 : 19.0);
+          final labelFontSize = (h * 0.019).clamp(12.5, 15.0);
+          final valueFontSize = (h * 0.017).clamp(11.5, 13.5);
+          final buttonPaddingV =
+              isVeryCompact ? 9.0 : (isCompact ? 11.0 : 14.0);
+          final buttonPaddingH = isCompact ? 32.0 : 44.0;
+          final buttonFontSize = (h * 0.026).clamp(16.0, 21.0);
 
-                const SizedBox(height: 10.0),
+          return SizedBox.expand(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isCompact ? 16.0 : 22.0,
+                vertical: isVeryCompact ? 2.0 : 6.0,
+              ),
+              child: AnimatedBuilder(
+                animation: Listenable.merge([
+                  _entranceController,
+                  _idleWiggleController,
+                ]),
+                builder: (context, _) {
+                  final idleWiggle =
+                      sin(_idleWiggleController.value * 2.0 * pi) * 0.035;
+                  final idleBob = sin(_idleWiggleController.value * pi) * 4.0;
 
-                // Badge
-                ScaleTransition(
-                  scale: _badgeScaleAnim,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14.0,
-                      vertical: 4.0,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(210),
-                      borderRadius: BorderRadius.circular(16.0),
-                    ),
-                    child: const Text(
-                      '✨ MISSION: REACH HAPPY MOOD ✨',
-                      style: TextStyle(
-                        color: Color(0xFF1E293B),
-                        fontSize: 12.0,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 10.0),
-
-                // Mode Title with Cartoon Pop
-                Transform.rotate(
-                  angle: _titleTiltAnim.value + idleWiggle,
-                  child: ScaleTransition(
-                    scale: _titleScaleAnim,
-                    child: Text(
-                      mood.gameTitle,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 36.0,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withAlpha(150),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Hero Mood Orb
+                      Transform.translate(
+                        offset: Offset(0, idleBob * 0.5),
+                        child: ScaleTransition(
+                          scale: _orbAnim,
+                          child: BubbleOrb(
+                            emoji: mood.emoji,
+                            size: orbSize,
+                            tintColor: mood.tintColor,
                           ),
-                          Shadow(
-                            color: mood.tintColor.withAlpha(190),
-                            blurRadius: 18,
-                            offset: const Offset(0, 0),
+                        ),
+                      ),
+
+                      // Badge
+                      ScaleTransition(
+                        scale: _badgeScaleAnim,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isCompact ? 10.0 : 14.0,
+                            vertical: isCompact ? 3.0 : 4.0,
                           ),
-                        ],
+                          decoration: BoxDecoration(
+                            color: Colors.white.withAlpha(210),
+                            borderRadius: BorderRadius.circular(16.0),
+                          ),
+                          child: Text(
+                            '✨ MISSION: REACH HAPPY MOOD ✨',
+                            style: TextStyle(
+                              color: const Color(0xFF1E293B),
+                              fontSize: isVeryCompact
+                                  ? 10.0
+                                  : (isCompact ? 11.0 : 12.0),
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
 
-                const SizedBox(height: 16.0),
-
-                // Rules Card
-                SlideTransition(
-                  position: _cardSlideAnim,
-                  child: ScaleTransition(
-                    scale: _cardScaleAnim,
-                    child: GlassCard(
-                      borderRadius: 24.0,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18.0,
-                        vertical: 16.0,
-                      ),
-                      child: Column(
-                        children: [
-                          // Goal banner
-                          ScaleTransition(
-                            scale: _ruleScaleAnim,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14.0,
-                                vertical: 10.0,
+                      // Mode Title with Cartoon Pop
+                      Transform.rotate(
+                        angle: _titleTiltAnim.value + idleWiggle,
+                        child: ScaleTransition(
+                          scale: _titleScaleAnim,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              mood.gameTitle,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: titleFontSize,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withAlpha(150),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                  Shadow(
+                                    color: mood.tintColor.withAlpha(190),
+                                    blurRadius: 18,
+                                    offset: const Offset(0, 0),
+                                  ),
+                                ],
                               ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withAlpha(35),
-                                borderRadius: BorderRadius.circular(16.0),
-                                border: Border.all(
-                                  color: Colors.white.withAlpha(70),
-                                  width: 1.2,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Rules Card
+                      SlideTransition(
+                        position: _cardSlideAnim,
+                        child: ScaleTransition(
+                          scale: _cardScaleAnim,
+                          child: GlassCard(
+                            borderRadius: isCompact ? 18.0 : 24.0,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isCompact ? 14.0 : 18.0,
+                              vertical: isVeryCompact
+                                  ? 8.0
+                                  : (isCompact ? 10.0 : 14.0),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Goal banner
+                                ScaleTransition(
+                                  scale: _ruleScaleAnim,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isCompact ? 10.0 : 14.0,
+                                      vertical: isVeryCompact
+                                          ? 6.0
+                                          : (isCompact ? 7.0 : 9.0),
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withAlpha(35),
+                                      borderRadius: BorderRadius.circular(14.0),
+                                      border: Border.all(
+                                        color: Colors.white.withAlpha(70),
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Score ${gameCtrl.targetScore} points in 1 minute to break free from your ${mood.name} mood and unlock the Happy Reward! 😊',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: bannerFontSize,
+                                        fontWeight: FontWeight.w700,
+                                        height: 1.28,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              child: Text(
-                                'Score ${gameCtrl.targetScore} points in 1 minute to break free from your ${mood.name} mood and unlock the Happy Reward! 😊',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15.5,
-                                  fontWeight: FontWeight.w700,
-                                  height: 1.35,
+
+                                SizedBox(
+                                  height: isVeryCompact
+                                      ? 4.0
+                                      : (isCompact ? 6.0 : 10.0),
                                 ),
-                              ),
+
+                                // Instruction 1: Hit target +10 points
+                                ScaleTransition(
+                                  scale: _detail1Anim,
+                                  child: _buildAlignedInstructionRow(
+                                    icon: Icons.gps_fixed_rounded,
+                                    title: 'Hit Target',
+                                    value: '+10 points',
+                                    color: const Color(0xFF4ADE80),
+                                    verticalPadding: itemVerticalPadding,
+                                    horizontalPadding: itemHorizontalPadding,
+                                    iconBoxSize: iconBoxSize,
+                                    iconSize: iconSize,
+                                    titleFontSize: labelFontSize,
+                                    valueFontSize: valueFontSize,
+                                  ),
+                                ),
+
+                                // Instruction 2: Missing target -3
+                                ScaleTransition(
+                                  scale: _detail2Anim,
+                                  child: _buildAlignedInstructionRow(
+                                    icon: Icons.timer_off_rounded,
+                                    title: 'Missing Target',
+                                    value: '-3 points',
+                                    color: const Color(0xFFFBBF24),
+                                    verticalPadding: itemVerticalPadding,
+                                    horizontalPadding: itemHorizontalPadding,
+                                    iconBoxSize: iconBoxSize,
+                                    iconSize: iconSize,
+                                    titleFontSize: labelFontSize,
+                                    valueFontSize: valueFontSize,
+                                  ),
+                                ),
+
+                                // Instruction 3: Wrong hit -1 life
+                                ScaleTransition(
+                                  scale: _detail3Anim,
+                                  child: _buildAlignedInstructionRow(
+                                    icon: Icons.close_rounded,
+                                    title: 'Wrong Hit',
+                                    value: '-1 life',
+                                    color: const Color(0xFFF87171),
+                                    verticalPadding: itemVerticalPadding,
+                                    horizontalPadding: itemHorizontalPadding,
+                                    iconBoxSize: iconBoxSize,
+                                    iconSize: iconSize,
+                                    titleFontSize: labelFontSize,
+                                    valueFontSize: valueFontSize,
+                                  ),
+                                ),
+
+                                // Instruction 4: Have 3 lives
+                                ScaleTransition(
+                                  scale: _detail4Anim,
+                                  child: _buildAlignedInstructionRow(
+                                    icon: Icons.favorite_rounded,
+                                    title: 'Total Lives',
+                                    value: '3 lives',
+                                    color: const Color(0xFFFB7185),
+                                    verticalPadding: itemVerticalPadding,
+                                    horizontalPadding: itemHorizontalPadding,
+                                    iconBoxSize: iconBoxSize,
+                                    iconSize: iconSize,
+                                    titleFontSize: labelFontSize,
+                                    valueFontSize: valueFontSize,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-
-                          const SizedBox(height: 16.0),
-
-                          // Scoring rule 1: Target hit
-                          ScaleTransition(
-                            scale: _detail1Anim,
-                            child: _buildDetailRow(
-                              icon: Icons.check_circle_outline_rounded,
-                              label: 'Hit Shifting Target: +10 Score',
-                              badgeColor: const Color(0xFF4ADE80),
-                            ),
-                          ),
-                          const SizedBox(height: 8.0),
-
-                          // Scoring rule 2: Missed shot at target
-                          ScaleTransition(
-                            scale: _detail2Anim,
-                            child: _buildDetailRow(
-                              icon: Icons.cancel_outlined,
-                              label: 'Miss Shot at Target: -5 (Non-targets safe)',
-                              badgeColor: const Color(0xFFF87171),
-                            ),
-                          ),
-                          const SizedBox(height: 8.0),
-
-                          // Speed & free floating
-                          ScaleTransition(
-                            scale: _detail3Anim,
-                            child: _buildDetailRow(
-                              icon: Icons.speed_rounded,
-                              label: '🎈 Balanced Speed Scaling & Free Floating',
-                              badgeColor: const Color(0xFFFFD54F),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-                ),
 
-                const SizedBox(height: 24.0),
-
-                // Play Button
-                ScaleTransition(
-                  scale: _btnScaleAnim,
-                  child: Transform.scale(
-                    scale: 1.0 + (sin(_idleWiggleController.value * pi) * 0.04),
-                    child: CustomButton(
-                      label: 'PLAY NOW!',
-                      icon: Icons.play_arrow_rounded,
-                      textColor: mood.backgroundColors.first,
-                      fontSize: 22.0,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 48.0,
-                        vertical: 16.0,
-                      ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const GameScreen(),
+                      // Play Button
+                      ScaleTransition(
+                        scale: _btnScaleAnim,
+                        child: Transform.scale(
+                          scale:
+                              1.0 +
+                              (sin(_idleWiggleController.value * pi) * 0.04),
+                          child: CustomButton(
+                            label: 'PLAY NOW!',
+                            icon: Icons.play_arrow_rounded,
+                            textColor: mood.backgroundColors.first,
+                            fontSize: buttonFontSize,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: buttonPaddingH,
+                              vertical: buttonPaddingV,
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const GameScreen(),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16.0),
-              ],
-            );
-          },
-        ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildDetailRow({
+  Widget _buildAlignedInstructionRow({
     required IconData icon,
-    required String label,
-    required Color badgeColor,
+    required String title,
+    required String value,
+    required Color color,
+    required double verticalPadding,
+    required double horizontalPadding,
+    required double iconBoxSize,
+    required double iconSize,
+    required double titleFontSize,
+    required double valueFontSize,
   }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(4.0),
-          decoration: BoxDecoration(
-            color: badgeColor.withAlpha(50),
-            shape: BoxShape.circle,
-            border: Border.all(color: badgeColor, width: 1.5),
-          ),
-          child: Icon(icon, color: badgeColor, size: 16.0),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2.5),
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: verticalPadding,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(20),
+        borderRadius: BorderRadius.circular(14.0),
+        border: Border.all(
+          color: Colors.white.withAlpha(35),
+          width: 1.0,
         ),
-        const SizedBox(width: 8.0),
-        Flexible(
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14.5,
-              fontWeight: FontWeight.w600,
+      ),
+      child: Row(
+        children: [
+          // Left: Aligned Circular Icon Badge
+          Container(
+            width: iconBoxSize,
+            height: iconBoxSize,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color.withAlpha(45),
+              shape: BoxShape.circle,
+              border: Border.all(color: color.withAlpha(180), width: 1.5),
+            ),
+            child: Icon(icon, color: color, size: iconSize),
+          ),
+          const SizedBox(width: 12.0),
+          // Center: Aligned Instruction Title
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: titleFontSize,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+              ),
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 8.0),
+          // Right: Aligned Value Badge
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10.0,
+              vertical: 4.0,
+            ),
+            decoration: BoxDecoration(
+              color: color.withAlpha(45),
+              borderRadius: BorderRadius.circular(10.0),
+              border: Border.all(
+                color: color.withAlpha(160),
+                width: 1.2,
+              ),
+            ),
+            child: Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: valueFontSize,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
